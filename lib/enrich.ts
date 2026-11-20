@@ -14,7 +14,7 @@ const EARTH_KM = 6371.0088;
 const round2 = (value: number) => Math.round(value * 100) / 100;
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
-function haversineKm(a: number[], b: number[]) {
+export function haversineKm(a: number[], b: number[]) {
   const dLat = rad(b[1] - a[1]), dLng = rad(b[0] - a[0]);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLng / 2) ** 2;
   return 2 * EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));

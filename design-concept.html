@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sampai — design concept (Senja)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Senja (dusk) palette: same family as the sunset idea, desaturated */
+    --paper: #faf7f5;
+    --surface: #ffffff;
+    --ink: #221d2e;
+    --ink-2: #6e6780;
+    --ink-3: #a29bb0;
+    --line: #ece6ea;
+    --plum: #4a3f6b;        /* primary actions */
+    --lavender: #b8aee0;
+    --rose: #e4a3b4;
+    --peach: #f2c09d;
+    --coral: #dd7f66;       /* highlights, route */
+    --sage: #7fae9f;        /* success, available */
+    --night: #17141f;
+    --night-2: #221e2d;
+    --night-line: #332d42;
+    --dusk: linear-gradient(160deg, #cfc6ee 0%, #ecc3cf 52%, #f6d3b8 100%);
+    --font: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #efebe8; color: var(--ink); font-family: var(--font); padding: 48px 24px 64px; -webkit-font-smoothing: antialiased; }
+
+  header { text-align: center; margin-bottom: 40px; }
+  header .mark { display: inline-flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 700; letter-spacing: -0.8px; }
+  header p { color: var(--ink-2); font-size: 15px; margin-top: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dusk); box-shadow: 0 0 0 4px rgba(228, 163, 180, .25); }
+
+  .row { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+  .shot { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .label { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+
+  .phone { width: 316px; height: 656px; border-radius: 44px; padding: 9px; background: #1d1a24; box-shadow: 0 24px 60px rgba(34, 29, 46, .18); }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; background: var(--paper); }
+  .status { position: absolute; top: 14px; left: 26px; right: 26px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; z-index: 3; }
+
+  .card { background: var(--surface); border-radius: 20px; border: 1px solid var(--line); }
+  .btn { display: flex; align-items: center; justify-content: center; height: 50px; border-radius: 16px; background: var(--plum); color: #fff; font-weight: 600; font-size: 15px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: #f4f0f3; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--ink-3); }
+
+  /* 1. Landing */
+  .hero { position: absolute; left: 0; right: 0; top: 0; height: 380px; background: var(--dusk); }
+  .hero .sun { position: absolute; left: 50%; top: 150px; width: 150px; height: 150px; margin-left: -75px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff6ec, rgba(255, 238, 222, .4) 60%, transparent 72%); }
+  .hero svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 130px; }
+  .brand { position: absolute; top: 64px; left: 26px; right: 26px; }
+  .brand h1 { font-size: 40px; font-weight: 700; letter-spacing: -1.6px; line-height: 1; color: var(--ink); }
+  .brand p { margin-top: 10px; font-size: 15px; color: #574f69; line-height: 1.45; max-width: 230px; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; top: 350px; background: var(--paper); border-radius: 28px 28px 0 0; padding: 22px 18px; }
+  .search { display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(74, 63, 107, .07); color: var(--ink-3); font-size: 15px; }
+  .search svg { flex: none; }
+  .recent { margin-top: 20px; display: grid; gap: 4px; }
+  .recent .eyebrow { margin-bottom: 6px; }
+  .place { display: flex; align-items: center; gap: 12px; padding: 10px 2px; }
+  .place .ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: #f4f0f3; flex: none; }
+  .place b { display: block; font-size: 14px; font-weight: 600; }
+  .place span { font-size: 12px; color: var(--ink-2); }
+  .place .t { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+
+  /* 2. Plan */
+  .map { position: absolute; inset: 0; background: #f1ede9; }
+  .map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .topbar { position: absolute; top: 44px; left: 14px; right: 14px; display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px); border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+  .topbar .arrow { color: var(--ink-3); font-weight: 400; }
+  .plan { position: absolute; left: 0; right: 0; bottom: 0; top: 236px; background: var(--paper); border-radius: 28px 28px 0 0; padding: 10px 18px 18px; box-shadow: 0 -10px 30px rgba(34, 29, 46, .06); }
+  .grab { width: 36px; height: 4px; border-radius: 4px; background: #ddd6dc; margin: 0 auto 14px; }
+  .sum { display: flex; align-items: baseline; gap: 8px; }
+  .sum h2 { white-space: nowrap; font-size: 26px; font-weight: 700; letter-spacing: -0.8px; }
+  .sum span { color: var(--ink-2); font-size: 14px; }
+  .chips { display: flex; gap: 6px; margin: 10px 0 16px; flex-wrap: wrap; }
+  .timeline { position: relative; display: grid; gap: 12px; padding-left: 22px; margin-bottom: 18px; }
+  .timeline::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: linear-gradient(var(--lavender), var(--rose), var(--peach)); }
+  .stop { position: relative; display: flex; justify-content: space-between; gap: 8px; }
+  .stop::before { content: ""; position: absolute; left: -21px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2.5px solid var(--rose); }
+  .stop.end::before { background: var(--coral); border-color: var(--coral); }
+  .stop b { display: block; font-size: 14px; font-weight: 600; }
+  .stop span { font-size: 12px; color: var(--ink-2); }
+  .stop .time { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  /* 3. Cruise (night) */
+  .night { position: absolute; inset: 0; background: var(--night); color: #f2eef7; }
+  .night .status { color: #f2eef7; }
+  .night svg.road { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .next { position: absolute; top: 44px; left: 14px; right: 14px; padding: 14px 16px; border-radius: 20px; background: var(--night-2); border: 1px solid var(--night-line); display: flex; gap: 14px; align-items: center; }
+  .next .ic { width: 44px; height: 44px; border-radius: 14px; background: rgba(184, 174, 224, .16); display: grid; place-items: center; flex: none; }
+  .next .d { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .next .n { font-size: 13px; color: #b3abc4; }
+  .mak { position: absolute; left: 14px; right: 14px; top: 340px; padding: 12px 14px; border-radius: 18px; background: rgba(34, 30, 45, .92); border: 1px solid var(--night-line); display: flex; gap: 12px; align-items: flex-start; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--rose), var(--peach)); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--ink); flex: none; }
+  .mak p { font-size: 14px; line-height: 1.45; color: #e9e4f1; }
+  .mak p b { font-weight: 600; color: var(--rose); }
+  .meter { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; color: #8f87a3; }
+  .meter i { width: 18px; height: 5px; border-radius: 4px; background: var(--night-line); }
+  .meter i.on { background: var(--rose); }
+  .dash { position: absolute; left: 14px; right: 14px; bottom: 16px; padding: 16px; border-radius: 22px; background: var(--night-2); border: 1px solid var(--night-line); display: flex; align-items: center; gap: 16px; }
+  .speed { text-align: center; min-width: 70px; }
+  .speed b { display: block; font-size: 38px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+  .speed span { font-size: 11px; color: #8f87a3; }
+  .vline { width: 1px; align-self: stretch; background: var(--night-line); }
+  .eta b { display: block; font-size: 18px; font-weight: 600; }
+  .eta span { font-size: 12px; color: #8f87a3; }
+  .end-btn { margin-left: auto; width: 44px; height: 44px; border-radius: 14px; background: rgba(221, 127, 102, .16); display: grid; place-items: center; }
+
+  /* 4. Arrived */
+  .glow { position: absolute; left: -20%; right: -20%; top: -120px; height: 380px; background: var(--dusk); filter: blur(30px); opacity: .85; }
+  .arr { position: absolute; top: 74px; left: 22px; right: 22px; }
+  .arr .eyebrow { color: #7d7393; }
+  .arr h2 { font-size: 44px; font-weight: 700; letter-spacing: -1.8px; margin-top: 6px; }
+  .arr p { color: #5d556f; font-size: 14px; margin-top: 4px; }
+  .wrapped { position: absolute; left: 16px; right: 16px; top: 228px; padding: 18px; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; margin-top: 12px; }
+  .grid4 b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .grid4 span { font-size: 12px; color: var(--ink-2); }
+  .unlock { margin-top: 16px; padding: 12px 14px; border-radius: 14px; background: #fbf1ee; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #8b4d3d; }
+  .unlock b { font-weight: 600; }
+  .arr-actions { position: absolute; left: 16px; right: 16px; bottom: 18px; display: grid; gap: 8px; }
+  .ghost { display: flex; align-items: center; justify-content: center; height: 46px; border-radius: 16px; font-weight: 600; font-size: 14px; color: var(--plum); }
+
+  .palette { display: flex; justify-content: center; gap: 12px; margin-top: 44px; flex-wrap: wrap; }
+  .sw { width: 86px; font-size: 12px; color: var(--ink-2); }
+  .sw i { display: block; height: 52px; border-radius: 14px; margin-bottom: 6px; border: 1px solid rgba(0, 0, 0, .05); }
+  .sw b { display: block; color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><span class="dot"></span>sampai</div>
+  <p>Design concept · “Senja” dusk palette, calm and modern</p>
+</header>
+
+<div class="row">
+
+  <!-- 1. Landing -->
+  <div class="shot">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+      <div class="hero">
+        <div class="sun"></div>
+        <svg viewBox="0 0 300 130" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 130 V96 h18 v-14 h14 v20 h16 V74 h12 v28 h20 V88 h14 v42z" fill="#ffffff" opacity=".28"/>
+          <path d="M120 130 V44 l3-6 V24 l2-4 2 4 v14 l3 6 v86z M150 130 V44 l3-6 V24 l2-4 2 4 v14 l3 6 v86z" fill="#ffffff" opacity=".38"/>
+          <path d="M190 130 V80 h16 v-18 h12 v28 h18 V70 h14 v34 h20 V90 h30 v40z" fill="#ffffff" opacity=".28"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>sampai.</h1>
+        <p>Balik kampung without the stress. Tolls, rest stops and prayer times in one calm plan.</p>
+      </div>
+      <div class="sheet">
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a29bb0" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Where are you going?
+        </div>
+        <div class="recent">
+          <div class="eyebrow">Recent</div>
+          <div class="place"><div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dd7f66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7v9H3z"/><path d="M10 20v-6h4v6"/></svg></div><div><b>Rumah Mak, Ipoh</b><span>KL → Ipoh · 205 km</span></div><span class="t">2h 05m</span></div>
+          <div class="place"><div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fae9f" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div><b>Penang</b><span>KL → George Town · 355 km</span></div><span class="t">4h 10m</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="label">Landing</div>
+  </div>
+
+  <!-- 2. Plan -->
+  <div class="shot">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+      <div class="map">
+        <svg viewBox="0 0 300 640" aria-hidden="true">
+          <defs><linearGradient id="rt" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b8aee0"/><stop offset=".55" stop-color="#e4a3b4"/><stop offset="1" stop-color="#dd7f66"/></linearGradient></defs>
+          <path d="M0 0h300v640H0z" fill="#f1ede9"/>
+          <path d="M40 110c40 10 60 40 110 30s70-40 150-30v60c-60-6-90 30-150 40S60 210 0 190z" fill="#e5ece4"/>
+          <path d="M190 200c30 0 60 20 110 10v50c-40 6-70-10-110 0z" fill="#dfe8ef"/>
+          <g stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round"><path d="M-10 160 L310 120"/><path d="M60 -10 L110 660"/><path d="M230 -10 L200 660"/><path d="M-10 250 C80 230 200 270 310 240"/></g>
+          <path d="M80 300 C110 250 100 200 150 170 C190 145 200 110 230 70" stroke="#ffffff" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <path d="M80 300 C110 250 100 200 150 170 C190 145 200 110 230 70" stroke="url(#rt)" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <circle cx="80" cy="300" r="7" fill="#fff" stroke="#b8aee0" stroke-width="3"/>
+          <circle cx="150" cy="170" r="6" fill="#fff" stroke="#e4a3b4" stroke-width="3"/>
+          <circle cx="230" cy="70" r="9" fill="#dd7f66" stroke="#fff" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="topbar">Kuala Lumpur <span class="arrow">→</span> Ipoh</div>
+      <div class="plan">
+        <div class="grab"></div>
+        <div class="sum"><h2>2h 05m</h2><span>205 km · leave 3:10 PM</span></div>
+        <div class="chips"><span class="chip">RM20.34 toll</span><span class="chip">1 stop</span><span class="chip">Light rain</span></div>
+        <div class="timeline">
+          <div class="stop"><div><b>Jalan Duta toll</b><span>Start</span></div><span class="time">3:10 PM</span></div>
+          <div class="stop"><div><b>R&amp;R Tapah</b><span>Surau · EV · Food · 20 min</span></div><span class="time">4:35 PM</span></div>
+          <div class="stop end"><div><b>Rumah Mak, Ipoh</b><span>Exit Simpang Pulai</span></div><span class="time">5:35 PM</span></div>
+        </div>
+        <div class="btn">Start drive</div>
+      </div>
+    </div></div>
+    <div class="label">Trip plan</div>
+  </div>
+
+  <!-- 3. Cruise -->
+  <div class="shot">
+    <div class="phone"><div class="screen">
+      <div class="night">
+        <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+        <svg class="road" viewBox="0 0 300 640" aria-hidden="true">
+          <defs><linearGradient id="lane" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e4a3b4" stop-opacity=".55"/><stop offset="1" stop-color="#b8aee0" stop-opacity="0"/></linearGradient></defs>
+          <path d="M150 200 L20 640 H280 Z" fill="#1e1a29"/>
+          <path d="M150 200 L112 640 H188 Z" fill="url(#lane)"/>
+          <g stroke="#332d42" stroke-width="2"><path d="M150 200 L20 640"/><path d="M150 200 L280 640"/></g>
+          <path d="M150 560 l-14 22 l14 -7 l14 7z" fill="#f2eef7"/>
+        </svg>
+        <div class="next">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8aee0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          <div><div class="d">2.0 km</div><div class="n">R&amp;R Tapah · Surau, EV charger</div></div>
+        </div>
+        <div class="mak">
+          <div class="avatar">M</div>
+          <div>
+            <p><b>Mak</b> · Slow down a little, sayang. The rendang will wait for you.</p>
+            <div class="meter">Mak level <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="dash">
+          <div class="speed"><b>112</b><span>km/h</span></div>
+          <div class="vline"></div>
+          <div class="eta"><b>5:35 PM</b><span>48 min · 71 km left</span></div>
+          <div class="end-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dd7f66" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="label">Cruise + Mak Mode</div>
+  </div>
+
+  <!-- 4. Arrived -->
+  <div class="shot">
+    <div class="phone"><div class="screen">
+      <div class="glow"></div>
+      <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+      <div class="arr">
+        <div class="eyebrow">Arrived · 5:31 PM</div>
+        <h2>Sampai.</h2>
+        <p>Rumah Mak, Ipoh. Four minutes early.</p>
+      </div>
+      <div class="wrapped card">
+        <div class="eyebrow">Your trip</div>
+        <div class="grid4">
+          <div><b>205 km</b><span>Distance</span></div>
+          <div><b>2h 01m</b><span>Drive time</span></div>
+          <div><b>RM20.34</b><span>≈ 8 teh tarik</span></div>
+          <div><b>2nd</b><span>of 6 cousins home</span></div>
+        </div>
+        <div class="unlock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dd7f66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7S10 3 7.5 3a2 2 0 0 0 0 4M12 7s2-4 4.5-4a2 2 0 0 1 0 4"/></svg><span>Mak level stayed at 3. <b>Rendang unlocked.</b></span></div>
+      </div>
+      <div class="arr-actions">
+        <div class="btn">Share trip card</div>
+        <div class="ghost">Back to home</div>
+      </div>
+    </div></div>
+    <div class="label">Arrival + trip recap</div>
+  </div>
+
+</div>
+
+<div class="palette">
+  <div class="sw"><i style="background:#4a3f6b"></i><b>Plum</b>Primary</div>
+  <div class="sw"><i style="background:#b8aee0"></i><b>Lavender</b>Start</div>
+  <div class="sw"><i style="background:#e4a3b4"></i><b>Rose</b>Accent</div>
+  <div class="sw"><i style="background:#f2c09d"></i><b>Peach</b>Warmth</div>
+  <div class="sw"><i style="background:#dd7f66"></i><b>Coral</b>Destination</div>
+  <div class="sw"><i style="background:#7fae9f"></i><b>Sage</b>Available</div>
+  <div class="sw"><i style="background:#faf7f5"></i><b>Paper</b>Background</div>
+  <div class="sw"><i style="background:#17141f"></i><b>Night</b>Drive mode</div>
+</div>
+
+</body>
+</html>

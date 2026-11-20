@@ -28,7 +28,7 @@ export function SharePage() {
     if (!image) return;
     try {
       if (navigator.canShare?.({ files: [image.file] })) {
-        await navigator.share({ title: "Jalan Pulang", text, files: [image.file] });
+        await navigator.share({ title: "LaPan", text, files: [image.file] });
       } else downloadImage(image.url);
       track("share");
     } catch (error) {

@@ -4,29 +4,24 @@ import { useEffect, useState } from "react";
 import { t } from "@/lib/i18n";
 import { groupCopy } from "@/lib/group-copy";
 import { prefsQuery, type Prefs } from "@/lib/onboarding";
+import { DEFAULT_GARAGE, frameUrl, loadGarage, VEHICLES } from "@/lib/garage";
+import { levelOf, loadProgress } from "@/lib/progress";
 
 export function Landing({ initial, tester, home }: { initial: Prefs; tester: boolean; home: boolean }) {
   const [lang, setLang] = useState(initial.lang);
-  const [returning, setReturning] = useState(false);
-  useEffect(() => {
-    try { setReturning(localStorage.getItem("jalan-pulang-onboarded") === "1"); }
-    catch { /* storage may be blocked: show onboarding */ }
-  }, []);
+  const [garage, setGarage] = useState(DEFAULT_GARAGE);
+  const [xp, setXp] = useState(0);
+  useEffect(() => { setGarage(loadGarage()); setXp(loadProgress().xp); }, []);
   const extra: Record<string, string> = tester ? { t: "1" } : {};
   const prefs = { ...initial, lang };
   const query = prefsQuery(prefs, extra);
-  const showHome = home || returning;
+  const showHome = home;
 
   return <main className="landing" data-view={showHome ? "home" : "welcome"} lang={lang}
     data-testid={showHome ? "screen-home" : "screen-landing"}>
     <header className="landing-top">
       <p className="landing-brand">
-        <svg aria-hidden="true" width="32" height="32" viewBox="0 0 56 56" fill="none">
-          <path d="M10 42C19 42 22 38 22 31V20C22 14 26 10 32 10h8m-7-6 8 6-8 7"
-            stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="10" cy="42" r="5" fill="currentColor" />
-          <path d="M31 45c9 0 14-5 14-14" stroke="currentColor" strokeOpacity=".55" strokeWidth="5" strokeLinecap="round" />
-        </svg>
+        <span className="brand-dot" aria-hidden="true" />
         {t(lang, "appName")}
       </p>
       <button type="button" className="btn language-button" data-testid="landing-lang" aria-label={t(lang, "langToggle")}
@@ -38,7 +33,20 @@ export function Landing({ initial, tester, home }: { initial: Prefs; tester: boo
       <p>{t(lang, "homeSub")}</p>
       <img className="home-map" src="/kl-ipoh-drive-preview.webp" alt="" />
       <a className="btn landing-cta" data-variant="primary" data-testid="home-plan"
-        href={(returning ? "/plan" : "/onboarding") + query}>{t(lang, "planMyDrive")}</a>
+        href={"/plan" + query}>{t(lang, "planMyDrive")}</a>
+      <nav className="play-links" aria-label={t(lang, "questsTitle")}>
+        <a className="play-link" href={"/quests" + prefsQuery({ lang })} data-testid="home-quests">
+          <span className="quest-icon" data-category="food" aria-hidden="true">!</span>
+          <strong>{t(lang, "questsTitle")}</strong>
+          <span>{t(lang, "questsLevel", { n: levelOf(xp).level, xp: levelOf(xp).toNext, next: levelOf(xp).level + 1 })}</span>
+        </a>
+        <a className="play-link" href={"/garage" + prefsQuery({ lang })} data-testid="home-garage">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={frameUrl(garage, 0)} alt="" />
+          <strong>{t(lang, "garageTitle")}</strong>
+          <span>{VEHICLES.find((v) => v.id === garage.vehicle)!.name[lang]}</span>
+        </a>
+      </nav>
       <nav className="landing-links" aria-label={t(lang, "homeMore")}>
         <a href={"/group-arrival" + prefsQuery({ lang })}>{groupCopy(lang, "title")}</a>
         <a href={"/about" + prefsQuery({ lang })}>{t(lang, "dataPrivacy")}</a>

@@ -1,6 +1,6 @@
-const cacheName = "jalan-pulang-v3";
-const mapAssets = new Set(["/drive-car.svg", "/welcome-route.svg", "/kl-map-preview.jpg", "/kl-ipoh-drive-preview.webp"]);
-const shell = ["/", "/?t=1", "/?welcome=1", "/?home=1", "/?t=1&home=1", "/plan", "/onboarding", "/share", "/about", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", ...mapAssets];
+const cacheName = "jalan-pulang-v5";
+const mapAssets = new Set(["/drive-car.png", "/garage/kart-coral-top.webp", "/stops/rnr.png", "/stops/layby.png", "/stops/home.png", "/welcome-route.svg", "/kl-map-preview.jpg", "/kl-ipoh-drive-preview.webp"]);
+const shell = ["/", "/?t=1", "/?welcome=1", "/?home=1", "/?t=1&home=1", "/plan", "/share", "/about", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", ...mapAssets];
 const dataPaths = new Set(["/api/weather", "/api/prayer"]);
 
 self.addEventListener("install", (event) => {
@@ -50,7 +50,7 @@ async function serve(request, asset, navigation, api) {
     if (!saved || response.status < 500) return response;
   } catch {
     const { pathname, searchParams } = new URL(request.url);
-    if (!saved && navigation && ["/", "/plan", "/onboarding"].includes(pathname)) {
+    if (!saved && navigation && ["/", "/plan"].includes(pathname)) {
       const rootQuery = new URLSearchParams();
       if (pathname === "/") {
         for (const key of ["t", "home", "welcome"]) if (searchParams.get(key) === "1") rootQuery.set(key, "1");
@@ -76,6 +76,6 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
   const api = dataPaths.has(url.pathname);
   const asset = url.pathname.startsWith("/_next/static/") || mapAssets.has(url.pathname) || url.pathname.startsWith("/icon-");
-  const navigation = request.mode === "navigate" && ["/", "/plan", "/onboarding", "/about", "/share"].includes(url.pathname);
+  const navigation = request.mode === "navigate" && ["/", "/plan", "/about", "/share"].includes(url.pathname);
   if (asset || navigation || api) event.respondWith(serve(request, asset, navigation, api));
 });

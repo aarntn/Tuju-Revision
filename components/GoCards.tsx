@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { t, type Lang } from "@/lib/i18n";
 import { googleMapsUrl, wazeLegs, telUrl } from "@/lib/deeplinks";
@@ -14,13 +14,17 @@ import { CruiseHud } from "./CruiseHud";
 import { useCruise } from "./useCruise";
 import { Source } from "./ui/Source";
 import type { DriveFrame } from "@/lib/drive-camera";
-import type { RoadGame, RoadQuest } from "@/lib/road-game";
-import { QuestDriveStatus, XpBadge } from "./RoadGame";
+import { completeQuest, levelOf, saveProgress, type Progress } from "@/lib/progress";
+import { questReached, type PlacedQuest } from "@/lib/quests";
+import { QuestDriveStatus, XpBadge, type QuestReward } from "./RoadGame";
+
+/** How long the "quest complete" reward stays up during a drive. */
+const REWARD_MS = 5200;
 
 export type DriveMode = "idle" | "gps" | "sim" | "finished";
 const plusLine = { number: "1-800-88-0000", source_url: "https://www.plus.com.my/customer-feedback/", retrieved_at: "2026-11-20" };
 
-export function GoCards({ config, line, routeKm, tolls, entry, stops, plannedStops, rnrStops, needs, lang, onShare, setDriveFrame, mode, setMode, driveMount, headingUp, setHeadingUp, game, quest, reward, onQuestProgress }: {
+export function GoCards({ config, line, routeKm, tolls, entry, stops, plannedStops, rnrStops, needs, lang, onShare, setDriveFrame, setDriveLine, mode, setMode, driveMount, headingUp, setHeadingUp, quests = [], progress, setProgress }: {
   config: RouteConfig; line: RouteLine; routeKm: number; tolls: TollFile;
   entry: string;
   /** Planned stops that are real places (used for handoff to Google Maps and Waze). */
@@ -32,9 +36,12 @@ export function GoCards({ config, line, routeKm, tolls, entry, stops, plannedSto
   needs: Partial<Record<Need, boolean>>;
   lang: Lang; onShare: () => void;
   setDriveFrame: (frame: DriveFrame | null) => void;
+  /** The line the drive follows after a reroute (`null`: the planned line). */
+  setDriveLine?: (line: RouteLine | null) => void;
   mode: DriveMode; setMode: (mode: DriveMode) => void; driveMount: HTMLDivElement | null;
   headingUp: boolean; setHeadingUp: (value: boolean) => void;
-  game: RoadGame; quest?: RoadQuest; reward?: RoadQuest; onQuestProgress: (km: number) => void;
+  /** Side quests on this route, and the driver's progress (XP, the quest they are on). */
+  quests?: PlacedQuest[]; progress?: Progress; setProgress?: (progress: Progress) => void;
 }) {
   const trigger = useRef<HTMLButtonElement | null>(null);
   const navigationStops = stops.filter((stop) => !stop.id.startsWith("break-"));
@@ -60,21 +67,37 @@ export function GoCards({ config, line, routeKm, tolls, entry, stops, plannedSto
   const slowZonesKm = useMemo(() => tolls.plazas.map((plaza) => plaza.distanceAlongRoute_km), [tolls.plazas]);
 
   const cruise = useCruise({
-    line, routeKm, events, slowZonesKm, lang, onFrame: setDriveFrame,
+    line, routeKm, events, slowZonesKm, lang, onFrame: setDriveFrame, onLineChange: setDriveLine,
+    destination: config.destination,
     onArrived: () => { if (mode === "sim") setMode("finished"); },
     onEnded: () => { setMode("idle"); requestAnimationFrame(() => trigger.current?.focus()); },
   });
   const snapshot = cruise.snapshot;
   const km = mode === "idle" ? null : snapshot?.km ?? null;
-  useEffect(() => {
-    if (quest && km !== null && (snapshot?.state === "CRUISING" || snapshot?.state === "ARRIVING")) onQuestProgress(km);
-  }, [km, onQuestProgress, quest, snapshot?.state]);
 
   const choose = (next: "gps" | "sim") => {
     if (next === "sim") track("sim_drive");
     setMode(next);
     if (next === "sim") cruise.startSim(); else cruise.startGps();
   };
+
+  // Side quests: the active one shows during the drive and pays out when it is reached.
+  const active = progress?.active ? quests.find((quest) => quest.id === progress.active) : undefined;
+  const [reward, setReward] = useState<QuestReward | null>(null);
+  useEffect(() => {
+    if (!active || !progress || !setProgress || mode === "idle" || !snapshot) return;
+    if (!questReached(active, { km: snapshot.km, point: snapshot.point, simulated: mode !== "gps" })) return;
+    const result = completeQuest(progress, active.id, active.xp);
+    saveProgress(result.progress);
+    setProgress(result.progress);
+    setReward({ title: active.title[lang], xp: result.gained, level: result.levelsUp > 0 ? levelOf(result.progress.xp).level : null });
+  }, [active, lang, mode, progress, setProgress, snapshot]);
+  useEffect(() => {
+    if (!reward) return;
+    const timer = window.setTimeout(() => setReward(null), REWARD_MS);
+    return () => window.clearTimeout(timer);
+  }, [reward]);
+  const tracked = active && km !== null && active.km > km ? active : undefined;
 
   const nextToll = km === null ? undefined : plazasAhead(tolls, km)[0];
   const toll = nextToll ? quoteToll(tolls, entry, nextToll.id) : null;
@@ -85,9 +108,9 @@ export function GoCards({ config, line, routeKm, tolls, entry, stops, plannedSto
       <CruiseHud lang={lang} snapshot={snapshot} destination={config.destination.name} stops={plannedStops.filter((stop) => !stop.id.startsWith("break-"))}
         simulated={mode === "sim" || mode === "finished"} headingUp={headingUp} onHeadingUp={setHeadingUp}
         muted={cruise.muted} onMute={cruise.setMuted} voiceLevel={cruise.voiceLevel} onVoiceLevel={cruise.setVoiceLevel}
-        wakeStatus={cruise.wakeStatus} voiceInfo={cruise.voiceInfo} gpsLost={cruise.gpsLost} rerouteUrl={rerouteUrl}
+        wakeStatus={cruise.wakeStatus} voiceInfo={cruise.voiceInfo} gpsLost={cruise.gpsLost} rerouteUrl={rerouteUrl} rerouteStatus={cruise.rerouteStatus}
         onExit={cruise.exit} onShare={onShare} onDetour={cruise.injectDetour}
-        questStatus={<QuestDriveStatus quest={quest} reward={reward} km={km} />} xpBadge={<XpBadge game={game} />}
+        questStatus={<QuestDriveStatus lang={lang} quest={tracked} reward={reward ?? undefined} km={km} />} xpBadge={<XpBadge xp={progress?.xp ?? 0} lang={lang} />}
         tollInfo={nextToll && km !== null ? <>
           {t(lang, "nextToll", { n: Math.ceil(nextToll.distanceAlongRoute_km - km), name: nextToll.name })}
           {toll?.ok && toll.verified && <> · {t(lang, "tollIfExit", { n: toll.fare.toFixed(2) })}</>}

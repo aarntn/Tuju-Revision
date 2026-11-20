@@ -7,8 +7,10 @@ import klIpohRoute from "@/data/routes/kl-ipoh/route.geojson";
 import klIpohRnr from "@/data/routes/kl-ipoh/rnr.json";
 import klIpohTolls from "@/data/routes/kl-ipoh/tolls.json";
 import klIpohGaz from "@/data/routes/kl-ipoh/gazetteer.json";
+import klIpohSteps from "@/data/routes/kl-ipoh/steps.json";
 import { RnrFile, RouteConfig, TollFile } from "./schemas";
 import type { RouteLine } from "./route";
+import type { RouteStep } from "./routing";
 
 export type Gazetteer = { source_url: string; retrieved_at: string; verified: boolean; places: { id: string; name: string; lat: number; lng: number; km: number; state: string }[] };
 
@@ -21,7 +23,7 @@ export type RouteBundle = {
 };
 
 const raw = {
-  "kl-ipoh": { config: klIpohConfig, line: klIpohRoute, rnr: klIpohRnr, tolls: klIpohTolls, gazetteer: klIpohGaz },
+  "kl-ipoh": { config: klIpohConfig, line: klIpohRoute, rnr: klIpohRnr, tolls: klIpohTolls, gazetteer: klIpohGaz, steps: klIpohSteps },
 } as const;
 
 export type RouteId = keyof typeof raw;
@@ -36,11 +38,16 @@ export function getRoute(id: string = DEFAULT_ROUTE): RouteBundle {
   const r = raw[key];
   const bundle: RouteBundle = {
     config: RouteConfig.parse(r.config),
-    line: r.line as unknown as RouteLine,
+    // Turn steps travel on the line, like OSRM routes fetched at runtime (see lib/trip-route.ts).
+    line: withSteps(r.line as unknown as RouteLine, r.steps.steps as RouteStep[]),
     rnr: RnrFile.parse(r.rnr),
     tolls: TollFile.parse(r.tolls),
     gazetteer: r.gazetteer as Gazetteer,
   };
   cache.set(key, bundle);
   return bundle;
+}
+
+function withSteps(line: RouteLine, steps: RouteStep[]): RouteLine {
+  return { ...line, properties: { ...line.properties, steps } };
 }

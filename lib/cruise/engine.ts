@@ -1,3 +1,4 @@
+import { createTurnCaller, type Maneuver, type NextTurn, type TurnCue } from "../directions";
 import { pointAt, type RouteLine } from "../route";
 import { cruiseConfig, type CruiseConfig } from "./config";
 import { createIntent } from "./intent";
@@ -25,6 +26,10 @@ export type CruiseSnapshot = {
   reached: LookaheadResult["reached"];
   speak: Utterance | null;
   cardsSuppressed: boolean;
+  /** The next turn on the route, while on it. */
+  turn: NextTurn | null;
+  /** A turn instruction to say now (each stage once per turn). */
+  turnCue: TurnCue | null;
   arrived: boolean;
   lastFixT: number;
 };
@@ -36,12 +41,13 @@ const ARRIVED_KM = 0.1;
  * The whole cruise pipeline in one pure object: filter → smooth → snap → intent → state machine → look-ahead.
  * It never touches React, the map, the network or the clock; the position source (a phone or the simulator) feeds it fixes.
  */
-export function createCruise({ line, routeKm, events, cfg = cruiseConfig }: {
-  line: RouteLine; routeKm: number; events: RouteEvent[]; cfg?: CruiseConfig;
+export function createCruise({ line, routeKm, events, maneuvers = [], cfg = cruiseConfig }: {
+  line: RouteLine; routeKm: number; events: RouteEvent[]; maneuvers?: Maneuver[]; cfg?: CruiseConfig;
 }) {
   const pipeline = createPipeline(line, cfg);
   const intent = createIntent(cfg);
   const lookahead = createLookahead(events, cfg);
+  const turns = createTurnCaller(maneuvers);
   let state: CruiseState = "IDLE";
   let source: CruiseSource | null = null;
   let current: CruiseSnapshot = blank();
@@ -49,7 +55,7 @@ export function createCruise({ line, routeKm, events, cfg = cruiseConfig }: {
   function blank(): CruiseSnapshot {
     return {
       state, source, km: null, remainingKm: null, speedKmh: 0, etaMs: null, offRouteM: 0, point: null, course: null,
-      fraction: null, alerts: [], reached: [], speak: null, cardsSuppressed: false, arrived: false, lastFixT: 0,
+      fraction: null, alerts: [], reached: [], speak: null, cardsSuppressed: false, turn: null, turnCue: null, arrived: false, lastFixT: 0,
     };
   }
   const publish = (patch: Partial<CruiseSnapshot> = {}) => (current = { ...current, ...patch, state, source });
@@ -66,7 +72,7 @@ export function createCruise({ line, routeKm, events, cfg = cruiseConfig }: {
     },
     exit() {
       state = send(state, "EXIT");
-      return publish({ alerts: [], reached: [], speak: null });
+      return publish({ alerts: [], reached: [], speak: null, turn: null, turnCue: null });
     },
     push(fix: Fix, controls: { voice: VoiceLevel; muted: boolean }): CruiseSnapshot {
       if (!LIVE.includes(state)) return current;
@@ -80,6 +86,7 @@ export function createCruise({ line, routeKm, events, cfg = cruiseConfig }: {
       const ahead = looking
         ? lookahead.update({ km: snapped.km, speedMps: snapped.speed, now: fix.t, voice: controls.voice, muted: controls.muted })
         : { alerts: [], reached: [], speak: null, cardsSuppressed: false };
+      const directions = looking ? turns.update(snapped.km, snapped.speed) : { next: null, cue: null };
       const offRoute = state === "OFF_ROUTE";
       return publish({
         km: snapped.km, remainingKm: snapped.remainingKm, speedKmh: snapped.speed * 3.6,
@@ -88,6 +95,7 @@ export function createCruise({ line, routeKm, events, cfg = cruiseConfig }: {
         point: offRoute ? [snapped.lng, snapped.lat] : pointAt(line, Math.min(snapped.km, routeKm)),
         course: snapped.heading, fraction: Math.min(1, snapped.km / routeKm),
         arrived: state === "ARRIVING" && snapped.remainingKm < ARRIVED_KM,
+        turn: directions.next, turnCue: directions.cue,
         lastFixT: fix.t, ...ahead,
       });
     },

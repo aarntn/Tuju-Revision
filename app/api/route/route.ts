@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const params = new URL(req.url).searchParams;
   const from = parsePoint(params.get("from")), to = parsePoint(params.get("to"));
   if (!from || !to) return NextResponse.json({ error: "invalid-points" }, { status: 400, headers: noStore });
-  const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson&alternatives=true&steps=false`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson&alternatives=true&steps=true`;
   try {
     const result = await cachedFetch({
       key: routeCacheKey(from, to), url, ttlMs: TTL, schema: OsrmResponse, timeoutMs: 12_000,

@@ -43,6 +43,7 @@ export function buildTripRoute({ from, to, option, source, fetchedAt, curated }:
     properties: {
       routeId: key, distance_m: option.distance_m, duration_s_freeflow: option.duration_s,
       source, source_url: "https://project-osrm.org/", retrieved_at: fetchedAt, verified: false,
+      ...(option.steps ? { steps: option.steps } : {}),
     },
     geometry: { type: "LineString", coordinates: option.geometry.coordinates },
   };

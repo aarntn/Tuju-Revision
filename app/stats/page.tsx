@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StatsTable } from "@/components/StatsTable";
 
-export const metadata: Metadata = { title: "Tester stats · Jalan Pulang", robots: { index: false, follow: false }, referrer: "no-referrer" };
+export const metadata: Metadata = { title: "Tester stats · LaPan", robots: { index: false, follow: false }, referrer: "no-referrer" };
 export const dynamic = "force-dynamic";
 
 export default async function Stats({ searchParams }: { searchParams: Promise<{ key?: string }> }) {

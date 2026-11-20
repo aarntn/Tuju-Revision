@@ -7,11 +7,21 @@ Jalan Pulang is a Malaysian drive companion. A tester picks any start and destin
 | Item | Status |
 | --- | --- |
 | Production | https://jalan-pulang.vercel.app serves deployment `jalan-pulang-cdo2dt1st` (the "interactive map and working step tabs" build). **Nothing after that is deployed.** |
-| Branch | `feat/landing-onboarding`. Not merged to `main`. |
-| Working tree | **Large and uncommitted.** It mixes your own changes (`Planner`, `DriveHud`, `drive-camera`, `drive-progress`, `presentation.css`, a new landing/onboarding look, `GoCards`, `RouteMap`, `Trip`, `Source`, `sw.js`) with the cruise-mode work described below. Review with `git status` and commit in logical groups before deploying. |
-| Automated tests | 232 unit tests in 29 files, all passing on the working tree. Typecheck clean. |
+| Branch | `feat/senja-rebrand`, tracking `origin/feat/senja-rebrand`. |
+| Working tree | Clean after commit `2699149`. |
+| Automated build | `npm run build` passes, including Next.js production compilation and TypeScript checking. |
+| Automated tests | Run `npm test` after changes; record the result for every handover. |
 | Browser checks | Run with throwaway Playwright scripts that are **not in the repository** (they lived in a temp folder). Adding them to the repo as an end-to-end suite is a recommended next step. |
 | Real phone | **Not tested on a physical phone.** Everything was checked in desktop Chrome with phone-sized viewports and emulated GPS. |
+
+### Latest handover snapshot
+
+- The latest pushed commits are `91aa621 Resolve merge conflicts and update Senja rebrand` and `2699149 Finish merge conflict resolution`.
+- The active branch is `feat/senja-rebrand`; it is not merged to `main` or `feat/landing-onboarding`.
+- Conflict markers from the merge/stash resolution were removed from the source tree.
+- The build initially exposed a missing `app/lapan.css` import. That import was removed because the stylesheet does not exist.
+- `components/RouteMap.tsx` now combines map themes, quest pins, Night Ops, route overlays, and selectable garage vehicle sprites. Check this file carefully after any upstream merge.
+- `app/layout.tsx`, `app/manifest.ts`, `app/tokens.css`, `components/CruiseHud.tsx`, `components/GoCards.tsx`, `components/RouteMap.tsx`, `components/Trip.tsx`, and `components/useCruise.ts` were involved in the merge and should be regression-checked together.
 
 ## What exists
 
@@ -43,6 +53,14 @@ Privacy: location is read in the browser and never sent to a server.
 
 ### Other features
 Landing and onboarding, Group Arrival, tester mode and counters (Blob-backed, durable once deployed), share page, offline shell, English and Bahasa Malaysia. See [FEATURES.md](FEATURES.md).
+
+### Garage, quests and Senja rebrand
+- The app has a Garage screen and vehicle selection in `components/Garage.tsx`, backed by `lib/garage.ts`.
+- The Garage currently contains Kart and Hatchback models with Plum, Coral, Sage, Lavender and Sunny paints.
+- Quest UI is in `components/Quests.tsx`, `lib/quests.ts`, and the `/quests` route.
+- The Route Map renders quest markers and keeps the selected garage vehicle visible in the live and outline views.
+- Blender assets are generated from `design/blender/build_garage.py`. It renders both top-down map sprites and 12-angle turntable frames.
+- The design includes LaPan/Senja branding in the layout, route, road UI and app styles. The live local build should be visually checked after pulling.
 
 ## Hand-checked data (tolls and R&R facilities)
 We never scrape or guess. Fill the sheets in `data/entry/` and import them. See [docs/DATA-ENTRY.md](docs/DATA-ENTRY.md). Toll fares exist for only one of the 13 entry plazas (Jalan Duta); the other 12 are blank and need your hand-checked values. R&R facilities are known for few stops (Tapah is complete).
@@ -87,19 +105,24 @@ Open `http://localhost:3000`. To check the service worker, offline flow or a pro
 | Planner shell, search, route options | `components/Planner.tsx`, `TripShell.tsx`, `Trip.tsx`, `PlaceSearch.tsx`, `RouteCard.tsx`, `RouteOptions.tsx`, `lib/trip-route.ts`, `lib/enrich.ts`, `lib/breaks.ts`, `lib/plan-fixes.ts` |
 | Server proxies | `app/api/places/route.ts`, `app/api/route/route.ts`, `lib/cache.ts`, `lib/limiter.ts` |
 | Cruise mode | `lib/cruise/*`, `components/useCruise.ts`, `components/CruiseHud.tsx`, `components/GoCards.tsx`, `app/cruise.css` |
-| Map | `components/RouteMap.tsx`, `lib/drive-camera.ts`, `lib/drive-progress.ts`, `public/drive-car.svg` |
+| Map | `components/RouteMap.tsx`, `lib/drive-camera.ts`, `lib/drive-progress.ts`, `public/drive-car.png` (rendered by `design/blender/build_car.py`) |
 | Styling | `app/tokens.css` (designer edits here), `app/map-first.css`, `app/presentation.css` |
 | Data | `data/routes/kl-ipoh`, `data/entry/*.csv`, `data/places-my.json`, `scripts/import-entry.ts` |
 | Group Arrival, counters, offline | `components/GroupArrival.tsx`, `app/api/group-arrival`, `lib/counter.ts`, `public/sw.js` |
+| Garage and 3D assets | `components/Garage.tsx`, `lib/garage.ts`, `public/garage/`, `design/blender/build_garage.py`, `design/blender/build_car.py`, `design/blender/build_kart.py` |
+| Quests | `app/quests/page.tsx`, `components/Quests.tsx`, `lib/quests.ts`, `lib/progress.ts` |
 
 ## Release checklist
-1. Review and commit the working tree in logical groups. Run `npm test`, `npx tsc --noEmit` and `npm run build`.
-2. Confirm production has `BLOB_READ_WRITE_TOKEN` and `STATS_KEY` (`vercel env ls production`). Deploy with the Vercel CLI and confirm the alias points to the new deployment.
-3. On a **physical phone**: plan KL → Penang and KL → Kota Bharu, confirm weather says "not covered" on the second; start Cruise with real GPS in a moving car if possible, otherwise Simulate; check voice, mute, the screen staying on, off-route and arrived.
-4. In three browser profiles run a Group Arrival event with two guests and a host reschedule.
-5. Open tester mode from the QR and confirm counts on the protected stats page. Subtract any test traffic you generated.
+1. Pull `feat/senja-rebrand` and confirm `git status` is clean. Run `npm test`, `npx tsc --noEmit` and `npm run build`.
+2. Open `/garage`, `/quests`, `/plan`, `/states` and `/share`; verify the selected vehicle, quest pins and road UI in both vector and raster map modes.
+3. Confirm production has `BLOB_READ_WRITE_TOKEN` and `STATS_KEY` (`vercel env ls production`). Deploy with the Vercel CLI and confirm the alias points to the new deployment.
+4. On a **physical phone**: plan KL → Penang and KL → Kota Bharu, confirm weather says "not covered" on the second; start Cruise with real GPS in a moving car if possible, otherwise Simulate; check voice, mute, the screen staying on, off-route and arrived.
+5. In three browser profiles run a Group Arrival event with two guests and a host reschedule.
+6. Open tester mode from the QR and confirm counts on the protected stats page. Subtract any test traffic you generated.
 
 ## Open items
+- Review the latest merge resolution and merge `feat/senja-rebrand` into `main` only after visual and mobile testing.
+- Regenerate Garage images only after Blender model or paint changes; confirm output filenames match `lib/garage.ts`.
 - Hand-check toll fares and R&R facilities into the entry sheets, then import.
 - Real-phone test of Cruise (GPS accuracy, speech, wake lock) and tune `lib/cruise/config.ts`.
 - Add the browser checks to the repository as a proper end-to-end suite.

@@ -4,10 +4,10 @@
  * route options as cards (Apple Maps), chip rows (Waymo). Only tokens from tokens.css; restyle there.
  */
 :root {
-  --color-status-live: #1b7a4b;
-  --color-status-estimate: #8a5a00;
-  --color-status-muted: #6b7f78;
-  --color-status-warn: #a4361f;
+  --color-status-live: #3f7a68;
+  --color-status-estimate: #93582c;
+  --color-status-muted: #7a7290;
+  --color-status-warn: #b0473a;
   --sheet-peek: 224px;
   --card-h: 100px;
   --column-w: 428px;

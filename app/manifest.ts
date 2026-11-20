@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Jalan Pulang", short_name: "Jalan Pulang", description: "Balik kampung trip planner",
+    name: "LaPan", short_name: "LaPan", description: "Balik kampung trip planner",
     start_url: "/", scope: "/", display: "standalone", background_color: "#f2f3f7", theme_color: "#f2f3f7",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

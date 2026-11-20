@@ -1,18 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 360" fill="none">
-  <g stroke="#72ae97" stroke-width="1.4" opacity=".33">
-    <path d="M-35 266C49 177 96 290 178 194s127-59 177-110 65-63 100-64"/>
-    <path d="M-36 292C46 198 103 313 186 219s130-58 175-111 66-65 100-65"/>
-    <path d="M-38 318C48 220 111 337 198 240s127-54 172-108 65-61 101-62"/>
-    <path d="M-41 346C49 243 119 359 210 263s129-51 169-104 63-64 98-64"/>
-    <path d="M-6 105c82 64 131 33 203-26S305 9 425 19"/>
-    <path d="M-14 127c82 62 138 36 212-18S310 33 426 43"/>
-    <path d="M-13 150c79 61 143 42 212-11S314 59 424 69"/>
+  <defs>
+    <radialGradient id="sun" cx="50%" cy="45%" r="50%">
+      <stop offset="0" stop-color="#fff7ef"/>
+      <stop offset=".55" stop-color="#fff1e6" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#fff1e6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="route" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#b68bf7"/>
+      <stop offset=".55" stop-color="#6431b4"/>
+      <stop offset="1" stop-color="#4608a3"/>
+    </linearGradient>
+  </defs>
+  <circle cx="230" cy="150" r="118" fill="url(#sun)"/>
+  <g fill="#ffffff">
+    <path opacity=".3" d="M0 360V292h22v-18h18v26h20v-40h16v36h24v-20h18v84z"/>
+    <path opacity=".42" d="M196 360V200l4-8v-18l3-5 3 5v18l4 8v160zM234 360V200l4-8v-18l3-5 3 5v18l4 8v160z"/>
+    <rect opacity=".42" x="206" y="238" width="30" height="5"/>
+    <path opacity=".3" d="M276 360v-74h22v-24h16v36h22v-50h18v44h26v-20h40v88z"/>
   </g>
-  <path d="M81 267c42-41 61-4 101-49 27-30 22-50 49-65 22-13 46-5 61-28 12-18 6-36 42-54"
-    stroke="#184338" stroke-width="20" stroke-linecap="round" />
-  <path d="M81 267c42-41 61-4 101-49 27-30 22-50 49-65 22-13 46-5 61-28 12-18 6-36 42-54"
-    stroke="#a9e8b9" stroke-width="7" stroke-linecap="round" />
-  <g fill="#d3f8db" stroke="#4b966f" stroke-width="3">
-    <circle cx="81" cy="267" r="9" /><circle cx="334" cy="71" r="10" />
-  </g>
+  <path d="M70 330c40-40 70-10 110-50 30-30 20-60 60-80 30-15 60-5 80-35 14-21 10-40 40-60"
+    stroke="#ffffff" stroke-opacity=".7" stroke-width="16" stroke-linecap="round"/>
+  <path d="M70 330c40-40 70-10 110-50 30-30 20-60 60-80 30-15 60-5 80-35 14-21 10-40 40-60"
+    stroke="url(#route)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="70" cy="330" r="8" fill="#ffffff" stroke="#6431b4" stroke-width="4"/>
+  <circle cx="360" cy="105" r="10" fill="#ec605b" stroke="#ffffff" stroke-width="4"/>
 </svg>

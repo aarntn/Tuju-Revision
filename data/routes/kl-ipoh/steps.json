@@ -1,0 +1,188 @@
+{
+ "routeId": "kl-ipoh",
+ "source": "OSRM public demo (router.project-osrm.org), OpenStreetMap data © OSM contributors",
+ "source_url": "https://router.project-osrm.org/route/v1/driving/101.6558,3.1757;101.0901,4.5975?overview=simplified&geometries=geojson&alternatives=false&steps=true",
+ "retrieved_at": "2026-11-20T07:01:38.796Z",
+ "distance_m": 192417.7,
+ "steps": [
+  {
+   "type": "depart",
+   "modifier": "right",
+   "name": "Lebuhraya DUKE",
+   "ref": "E33",
+   "lng": 101.655789,
+   "lat": 3.175758,
+   "along_m": 0
+  },
+  {
+   "type": "off ramp",
+   "modifier": "slight left",
+   "name": "",
+   "ref": "E33",
+   "lng": 101.662446,
+   "lat": 3.185007,
+   "along_m": 1455
+  },
+  {
+   "type": "fork",
+   "modifier": "slight right",
+   "name": "",
+   "ref": "E33",
+   "destinations": "54, E1: Sg Buloh, Kuala Selangor, Kuantan, Klang / Ipoh",
+   "lng": 101.62577,
+   "lat": 3.198789,
+   "along_m": 6181
+  },
+  {
+   "type": "fork",
+   "modifier": "slight right",
+   "name": "",
+   "ref": "E33",
+   "destinations": "54, E1: Sg Buloh, Kuala Selangor, Kuantan, Klang / Ipoh",
+   "lng": 101.624705,
+   "lat": 3.198613,
+   "along_m": 6315
+  },
+  {
+   "type": "merge",
+   "modifier": "slight right",
+   "name": "Jalan Lingkaran Tengah 2",
+   "ref": "28",
+   "lng": 101.622822,
+   "lat": 3.197651,
+   "along_m": 6553
+  },
+  {
+   "type": "new name",
+   "modifier": "straight",
+   "name": "Jalan Kuala Selangor",
+   "ref": "54",
+   "lng": 101.619431,
+   "lat": 3.197563,
+   "along_m": 6941
+  },
+  {
+   "type": "off ramp",
+   "modifier": "slight left",
+   "name": "",
+   "lng": 101.588775,
+   "lat": 3.201514,
+   "along_m": 10547
+  },
+  {
+   "type": "turn",
+   "modifier": "right",
+   "name": "",
+   "lng": 101.589413,
+   "lat": 3.201587,
+   "along_m": 10856
+  },
+  {
+   "type": "turn",
+   "modifier": "right",
+   "name": "",
+   "destinations": "E1",
+   "lng": 101.589507,
+   "lat": 3.201565,
+   "along_m": 10867
+  },
+  {
+   "type": "fork",
+   "modifier": "slight right",
+   "name": "",
+   "destinations": "E1: Alor Setar, Ipoh, Rawang",
+   "lng": 101.5852,
+   "lat": 3.201872,
+   "along_m": 11443
+  },
+  {
+   "type": "merge",
+   "modifier": "slight right",
+   "name": "Lebuhraya Utara–Selatan",
+   "ref": "E1",
+   "destinations": "Bukit Kayu Hitam",
+   "lng": 101.582668,
+   "lat": 3.204265,
+   "along_m": 12399
+  },
+  {
+   "type": "off ramp",
+   "modifier": "slight left",
+   "name": "",
+   "destinations": "1: Simpang Pulai, Batu Gajah, Universiti Teknologi Petronas, Cameron Highlands",
+   "lng": 101.135443,
+   "lat": 4.523391,
+   "along_m": 181211
+  },
+  {
+   "type": "turn",
+   "modifier": "right",
+   "name": "Jalan Sultan Nazrin Shah",
+   "ref": "1",
+   "lng": 101.131922,
+   "lat": 4.525029,
+   "along_m": 181820
+  },
+  {
+   "type": "roundabout",
+   "modifier": "left",
+   "exit": 2,
+   "name": "Jalan Raja Dihilir",
+   "ref": "A13",
+   "destinations": "Taman Budaya Perak, Taman Jepun, Taman Rekreasi Sultan Adbul Aziz, Hospital Ipoh",
+   "lng": 101.090273,
+   "lat": 4.591755,
+   "along_m": 191039
+  },
+  {
+   "type": "exit roundabout",
+   "modifier": "slight left",
+   "exit": 2,
+   "name": "Jalan Raja Dihilir",
+   "ref": "A13",
+   "destinations": "Taman Budaya Perak, Taman Jepun, Taman Rekreasi Sultan Adbul Aziz, Hospital Ipoh",
+   "lng": 101.090455,
+   "lat": 4.592253,
+   "along_m": 191151
+  },
+  {
+   "type": "turn",
+   "modifier": "left",
+   "name": "Jalan Foo Choong Nyit",
+   "lng": 101.092881,
+   "lat": 4.593077,
+   "along_m": 191436
+  },
+  {
+   "type": "turn",
+   "modifier": "right",
+   "name": "Jalan Wan Mohammed Salleh",
+   "lng": 101.092424,
+   "lat": 4.59578,
+   "along_m": 191943
+  },
+  {
+   "type": "turn",
+   "modifier": "left",
+   "name": "Jalan Sultan Abdul Jalil",
+   "lng": 101.092113,
+   "lat": 4.597873,
+   "along_m": 192177
+  },
+  {
+   "type": "turn",
+   "modifier": "left",
+   "name": "",
+   "lng": 101.090331,
+   "lat": 4.597618,
+   "along_m": 192377
+  },
+  {
+   "type": "arrive",
+   "name": "",
+   "lng": 101.090102,
+   "lat": 4.597476,
+   "along_m": 192418
+  }
+ ]
+}

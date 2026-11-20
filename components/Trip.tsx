@@ -14,11 +14,16 @@ import { downloadSnapshot, storeSnapshot, type Snapshot } from "@/lib/trip-card"
 import type { RnrFile, RouteConfig, TollFile } from "@/lib/schemas";
 import type { EtaGrid } from "@/lib/eta-grid";
 import type { RouteLine } from "@/lib/route";
+import { onRoute, placeQuests, QUESTS, surauQuests } from "@/lib/quests";
+import { EMPTY_PROGRESS, loadProgress, type Progress } from "@/lib/progress";
 import { LeaveTimeBar, TollPicker } from "./PlanCards";
 import { BreakCard, PrayerCard, StopCard, WeatherCard, type PrayerResponse, type WeatherResponse } from "./RoadCards";
 import { RouteMap } from "./RouteMap";
 import type { DriveFrame } from "@/lib/drive-camera";
-import { completeQuest, parseRoadGame, questsForRoute, ROAD_GAME_KEY, startQuest, type RoadGame, type RoadQuest } from "@/lib/road-game";
+import { DEFAULT_GARAGE, loadGarage, saveGarage, spriteUrl, VEHICLES, type GarageChoice } from "@/lib/garage";
+import { loadSaved, toggleSaved } from "@/lib/saved-places";
+import { dropQuest, saveProgress, startQuest } from "@/lib/progress";
+import type { PlacedQuest } from "@/lib/quests";
 
 import { GoCards, type DriveMode } from "./GoCards";
 import { GameSheet, RoadIcon, XpBadge, type GameScreen } from "./RoadGame";
@@ -29,7 +34,6 @@ import { Source } from "./ui/Source";
 const needsList = ["toilet", "surau", "ev", "food", "fuel"] as const;
 const steps = ["stepPlan", "stepRoad", "stepGo"] as const;
 const FIVE_MINUTES = 300_000;
-const DEFAULT_GAME = parseRoadGame(null);
 const SNAPS = ["peek", "half", "full"] as const;
 type Snap = (typeof SNAPS)[number];
 
@@ -74,18 +78,25 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
   const [weatherAttempt, setWeatherAttempt] = useState(0);
   const [prayerAttempt, setPrayerAttempt] = useState(0);
   const [driveFrame, setDriveFrame] = useState<DriveFrame | null>(null);
+  /** Set while a drive follows a rerouted line instead of the planned one. */
+  const [driveLine, setDriveLine] = useState<RouteLine | null>(null);
   const [driveMode, setDriveMode] = useState<DriveMode>("idle");
+  const [progress, setProgress] = useState<Progress>(EMPTY_PROGRESS);
+  useEffect(() => { setProgress(loadProgress()); }, []);
+  const quests = useMemo(() => onRoute(placeQuests(line, [...QUESTS, ...surauQuests(rnr.items)])), [line, rnr.items]);
+  const questPins = useMemo(() => quests.map((quest) => ({
+    id: quest.id, lng: quest.lng, lat: quest.lat, title: quest.title[lang],
+    active: progress.active === quest.id, done: progress.completed.includes(quest.id),
+  })), [lang, progress, quests]);
   const [driveMount, setDriveMount] = useState<HTMLDivElement | null>(null);
   const [headingUp, setHeadingUp] = useState(true);
-  const [storedGame, setStoredGame] = useState<RoadGame | null>(null);
-  const game = storedGame ?? DEFAULT_GAME;
+  const [garage, setGarage] = useState<GarageChoice>(DEFAULT_GARAGE);
+  const [saved, setSaved] = useState<string[]>([]);
   const [gameScreen, setGameScreen] = useState<GameScreen | null>(null);
-  const [questId, setQuestId] = useState<RoadQuest["id"] | null>(null);
-  const [reward, setReward] = useState<RoadQuest>();
-  const quests = useMemo(() => questsForRoute(rnr.items), [rnr.items]);
-  const questPins = useMemo(() => quests.filter((quest) => !game.done.includes(quest.id)).map((quest) => quest.stopId), [game.done, quests]);
-  const activeQuest = quests.find((quest) => quest.id === game.active);
+  const [questId, setQuestId] = useState<string | null>(null);
   const draftQuest = quests.find((quest) => quest.id === questId);
+  /** Prayer quests belong to a curated rest stop; other quests are places off the highway. */
+  const questStop = (quest?: PlacedQuest) => quest ? rnr.items.find((stop) => `surau-${stop.id}` === quest.id) ?? null : null;
   const [lite, setLite] = useState(false);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [fallback, setFallback] = useState<null | "skip" | "breaks">(null);
@@ -101,18 +112,14 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
   const prayers = useMemo(() => prayerResult?.date === selectedDate ? prayerResult.data : [], [prayerResult, selectedDate]);
 
   useEffect(() => {
-    try { setStoredGame(parseRoadGame(localStorage.getItem(ROAD_GAME_KEY))); } catch { setStoredGame(DEFAULT_GAME); }
+    setGarage(loadGarage());
+    setSaved(loadSaved());
+    // /quests and /garage open their sheet over the map.
+    const sheetParam = new URLSearchParams(window.location.search).get("sheet");
+    if (sheetParam === "quests" || sheetParam === "garage") setGameScreen(sheetParam);
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     setLite(Boolean(connection?.saveData || /(^|-)[23]g$/.test(connection?.effectiveType ?? "")));
   }, []);
-  useEffect(() => {
-    if (storedGame) { try { localStorage.setItem(ROAD_GAME_KEY, JSON.stringify(storedGame)); } catch { /* use in-memory state */ } }
-  }, [storedGame]);
-  useEffect(() => {
-    if (!reward) return;
-    const timeout = window.setTimeout(() => setReward(undefined), 5200);
-    return () => window.clearTimeout(timeout);
-  }, [reward]);
 
   // The offline fallback serves a cached bare /plan; the address bar still holds the real choices.
   useEffect(() => {
@@ -249,18 +256,13 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
   const selectedStop = [...rnr.items, ...planned].find((stop) => stop.id === selectedStopId) ?? null;
   const showStop = (id: string) => {
     setSelectedStopId(id);
-    const quest = quests.find((item) => item.stopId === id);
+    const quest = quests.find((item) => item.id === `surau-${id}`);
     setQuestId(quest?.id ?? null);
     setGameScreen(quest ? "quest-place" : "place");
   };
   const closeGame = () => { setGameScreen(null); setSelectedStopId(null); setQuestId(null); };
   const openQuests = () => { setSelectedStopId(null); setQuestId(null); setGameScreen("quests"); };
-  const selectQuest = (quest: RoadQuest) => { setQuestId(quest.id); setSelectedStopId(quest.stopId); setGameScreen("quest"); };
-  const reachQuest = (km: number) => {
-    if (!activeQuest) return;
-    const next = completeQuest(game, activeQuest, km);
-    if (next !== game) { setStoredGame(next); setReward(activeQuest); }
-  };
+  const selectQuest = (quest: PlacedQuest) => { setQuestId(quest.id); setSelectedStopId(questStop(quest)?.id ?? null); setGameScreen("quest"); };
   const nudge = (direction: 1 | -1) => setSnap((current) => SNAPS[Math.max(0, Math.min(SNAPS.length - 1, SNAPS.indexOf(current) + direction))]);
 
   const share = () => {
@@ -303,14 +305,15 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
   const [origin, destination] = config.name[lang].split(" → ");
   return <main ref={viewport} className="app road-ui" lang={lang} data-map-sheet={gameScreen ?? undefined} data-lite={lite} data-snap={snap} data-driving={driving} data-browsing={browsing}>
     <div className="map-stage">
-      <RouteMap line={line} stops={rnr.items} driveFrame={driveFrame} simulated={driveMode === "sim" || driveMode === "finished"} headingUp={headingUp} lang={lang}
+      <RouteMap line={driveLine ?? line} quests={driving ? questPins.filter((pin) => pin.active) : questPins}
+        onSelectQuest={(id) => { const quest = quests.find((item) => item.id === id); if (quest) selectQuest(quest); }} stops={rnr.items} driveFrame={driveFrame} simulated={driveMode === "sim" || driveMode === "finished"} headingUp={headingUp} lang={lang}
         places={[origin ?? config.origin.name, destination ?? config.destination.name]} online={online}
         selectedStopId={driving ? null : selectedStopId} onSelectStop={driving ? undefined : (id) => id && showStop(id)} driving={driving}
-        browsing={browsing} startNorthUp={startOnMap} lite={lite} questPins={questPins} activeQuestPin={activeQuest?.stopId} car={game.car}
+        browsing={browsing} startNorthUp={startOnMap} lite={lite} vehicleSprite={spriteUrl(garage)} plate={garage.plate}
         showRoute={gameScreen ? gameScreen === "quest" : !browsing} alternatives={alternativeLines}
         focus={selectedStop ? { id: selectedStop.id, lat: selectedStop.lat, lng: selectedStop.lng } : null} padding={padding}
         preview={config.id === "kl-ipoh" && !process.env.NEXT_PUBLIC_TILE_URL ? "/kl-ipoh-drive-preview.webp" : undefined} />
-      {!driving && !gameScreen && <header className="road-map-head"><h1 className="sr-only">Jalan Pulang</h1><XpBadge game={game} onClick={openQuests} />
+      {!driving && !gameScreen && <header className="road-map-head"><h1 className="sr-only">{t(lang, "appName")}</h1><XpBadge xp={progress.xp} lang={lang} onClick={openQuests} />
         {!browsing && <div className="road-map-head-actions"><a href="/" className="btn language-button" aria-label="Back to map home"><RoadIcon name="home" /></a>
           <button type="button" className="btn language-button" data-testid="btn-lang" aria-label={t(lang, "langToggle")} onClick={() => setLang(lang === "en" ? "bm" : "en")}>{lang === "en" ? "BM" : "EN"}</button></div>}</header>}
       {!driving && !browsing && !gameScreen && routeCard?.(lang)}
@@ -340,8 +343,8 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
         </button>
         <nav className="road-quick" aria-label="Map shortcuts">
           <button type="button" data-testid="map-open-plan" onClick={() => move(0)}><span><RoadIcon name="home" /></span><b>Home</b><small>{destination ?? config.destination.name}</small></button>
-          <button type="button" onClick={openQuests}><span><RoadIcon name="quests" /></span><b>Side quests</b><small>{questPins.length} on route</small></button>
-          <button type="button" onClick={() => setGameScreen("garage")}><span><RoadIcon name="garage" /></span><b>Garage</b><small>{game.car.body.toUpperCase() === "SUV" ? "SUV" : game.car.body}</small></button>
+          <button type="button" onClick={openQuests}><span><RoadIcon name="quests" /></span><b>{t(lang, "questsTitle")}</b><small>{quests.filter((quest) => !progress.completed.includes(quest.id)).length} {lang === "bm" ? "di laluan" : "on route"}</small></button>
+          <button type="button" onClick={() => setGameScreen("garage")}><span><RoadIcon name="garage" /></span><b>{t(lang, "garageTitle")}</b><small>{VEHICLES.find((item) => item.id === garage.vehicle)!.name[lang]}</small></button>
           <button type="button" onClick={onSearchDestination}><span><RoadIcon name="recent" /></span><b>Recent</b><small>{recentPlace ?? "Places"}</small></button>
         </nav>
       </section> : <>
@@ -412,7 +415,7 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
       </section>}
       {step === 1 && <section className="stack trip-content" data-testid="screen-road">
         <Card id="card-plan" title={t(lang, "planTitle")}
-          source={<Source label="Jalan Pulang / OpenStreetMap" status="estimate" ts={rnr.retrieved_at} lang={lang} />}
+          source={<Source label="LaPan / OpenStreetMap" status="estimate" ts={rnr.retrieved_at} lang={lang} />}
           state={!plan ? "loading" : !plan.ok ? "error" : plan.stops.length ? "default" : "empty"}>
           {!plan ? <p role="status">{t(lang, "loading")}</p> : !plan.ok ? <><p><strong>{t(lang, "infeasible")}</strong></p>
             <p>{t(lang, ("plan_" + plan.reason) as "plan_range" | "plan_max-driving" | "plan_needs" | "plan_prayer" | "plan_no-stops")}</p>
@@ -443,9 +446,9 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
           </div>
         </details>}
       </section>}
-      {step === 2 && plan?.ok && <GoCards {...{ config, line, tolls, routeKm, lang, setDriveFrame, driveMount }} entry={routeEntry} mode={driveMode} setMode={setDriveMode}
+      {step === 2 && plan?.ok && <GoCards {...{ config, line, tolls, routeKm, lang, setDriveFrame, setDriveLine, driveMount }} entry={routeEntry} mode={driveMode} setMode={setDriveMode}
         stops={planned} plannedStops={planned} rnrStops={rnr.items} needs={needs}
-        headingUp={headingUp} setHeadingUp={setHeadingUp} onShare={share} game={game} quest={activeQuest} reward={reward} onQuestProgress={reachQuest} />}
+        headingUp={headingUp} setHeadingUp={setHeadingUp} onShare={share} quests={quests} progress={progress} setProgress={setProgress} />}
       {step < 2 && <nav className="step-nav" aria-label={t(lang, "steps")}>
         {step > 0 && <button type="button" className="btn" data-testid="btn-back" onClick={() => move(0)}>{t(lang, "back")}</button>}
         <button type="button" className="btn" data-variant="primary" data-testid="btn-next" onClick={() => move(step + 1)}
@@ -467,15 +470,13 @@ export function Trip({ config, line, rnr, tolls, routeKm, date, tester, eta, ini
       </footer>
       </>}
     </div>
-    {gameScreen && <GameSheet screen={gameScreen} game={game} quests={quests} quest={draftQuest} stop={selectedStop} lang={lang}
+    {gameScreen && <GameSheet screen={gameScreen} progress={progress} garage={garage} saved={saved} quests={quests} quest={draftQuest} stop={selectedStop} lang={lang}
       onClose={closeGame} onBack={() => gameScreen === "quest-place" && draftQuest ? selectQuest(draftQuest) : gameScreen === "quest" ? openQuests() : closeGame()}
       onQuest={selectQuest} onQuestPlace={() => setGameScreen("quest-place")}
-      onStart={(quest) => { setStoredGame((value) => startQuest(value ?? DEFAULT_GAME, quest)); setReward(undefined); move(plan?.ok ? 2 : 1); }}
-      onApplyCar={(car) => { setStoredGame((value) => ({ ...(value ?? DEFAULT_GAME), car })); closeGame(); }}
-      onSave={(stop) => setStoredGame((value) => {
-        const next = value ?? DEFAULT_GAME;
-        return { ...next, saved: next.saved.includes(stop.id) ? next.saved.filter((id) => id !== stop.id) : [...next.saved, stop.id] };
-      })} onRoutes={(stop) => { closeGame(); onPlanToStop(stop); }} />}
+      onStart={(quest) => { const next = startQuest(progress, quest.id); saveProgress(next); setProgress(next); closeGame(); move(plan?.ok ? 2 : 1); }}
+      onDrop={() => { const next = dropQuest(progress); saveProgress(next); setProgress(next); }}
+      onApplyCar={(choice) => { saveGarage(choice); setGarage(choice); closeGame(); }}
+      onSave={(stop) => setSaved((value) => toggleSaved(value, stop.id))} onRoutes={(stop) => { closeGame(); onPlanToStop(stop); }} />}
     {overlay?.(lang)}
   </main>;
 }

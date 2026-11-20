@@ -215,7 +215,7 @@
 .map-vehicle {
   width: var(--drive-car-width);
   height: calc(var(--drive-car-width) * 1.3);
-  background: url("/drive-car.svg") center / contain no-repeat;
+  background: url("/drive-car.png") center / contain no-repeat;
   pointer-events: none;
   z-index: 1;
 }

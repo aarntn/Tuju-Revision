@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lapan",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Users/Legion/Downloads/LaPan/tuju", "run", "dev", "--", "-p", "3000"],
+      "port": 3000
+    }
+  ]
+}

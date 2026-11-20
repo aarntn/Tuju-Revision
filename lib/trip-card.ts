@@ -16,7 +16,7 @@ export function readSnapshot(): Snapshot | null {
 export function caption(snapshot: Snapshot) {
   return [snapshot.route, snapshot.departure, snapshot.toll,
     snapshot.stops.length ? snapshot.stops.join(" · ") : t(snapshot.lang, "planNone"),
-    snapshot.weather, "#BalikKampung #JalanPulang"].join("\n");
+    snapshot.weather, "#BalikKampung #LaPan"].join("\n");
 }
 
 const layout = { width: 1080, height: 1350, margin: 76, title: 60, heading: 34, text: 38, line: 50, gap: 36 };
@@ -51,7 +51,7 @@ export async function snapshotImage(snapshot: Snapshot) {
     ctx.fillText(buffer, layout.margin, y, writingWidth);
     y += Math.max(layout.line, size);
   };
-  line("Jalan Pulang", layout.title, true);
+  line("LaPan", layout.title, true);
   line(snapshot.route, layout.text);
   y += layout.gap;
   for (const [heading, text] of [

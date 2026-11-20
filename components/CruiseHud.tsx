@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cruiseConfig } from "@/lib/cruise/config";
 import type { CruiseSnapshot } from "@/lib/cruise/engine";
+import { cueDistances, instruction, turnIcon } from "@/lib/directions";
+import type { RerouteStatus } from "./useCruise";
+import { TurnArrow } from "./TurnArrow";
 import type { Alert, VoiceLevel } from "@/lib/cruise/lookahead";
 import type { WakeStatus } from "@/lib/cruise/wakelock";
 import { driveProgress } from "@/lib/drive-progress";
@@ -13,6 +16,8 @@ const VOICE_ORDER: VoiceLevel[] = ["full", "normal", "reduced"];
 const VOICE_LABEL: Record<VoiceLevel, Key> = { full: "cruiseVoiceFull", normal: "cruiseVoiceNormal", reduced: "cruiseVoiceReduced" };
 const FACILITY_LABEL: Record<string, Key> = { surau: "surau", toilet: "toilet", fuel: "fuel", ev: "evCharger", food: "food", atm: "atm" };
 const RECOVERED_MS = 4000;
+/** A turn this close (km) is shown even over a rest-stop banner. */
+const TURN_SHOW_KM = 3;
 const EXIT_CONFIRM_MS = 3000;
 
 const metres = (km: number) => `${Math.max(50, Math.round((km * 1000) / 50) * 50)} m`;
@@ -22,13 +27,14 @@ const urgency = (a: Alert, b: Alert) => b.level - a.level || a.distKm - b.distKm
 
 export function CruiseHud({
   lang, snapshot, destination, stops, simulated, headingUp, onHeadingUp, muted, onMute, voiceLevel, onVoiceLevel,
-  wakeStatus, voiceInfo, gpsLost = false, rerouteUrl, onExit, onShare, onDetour, tollInfo, questStatus, xpBadge,
+  wakeStatus, voiceInfo, gpsLost = false, rerouteUrl, rerouteStatus = "idle", onExit, onShare, onDetour, tollInfo, questStatus, xpBadge,
 }: {
   lang: Lang; snapshot: CruiseSnapshot; destination: string; stops: Stop[]; simulated: boolean;
   headingUp: boolean; onHeadingUp: (value: boolean) => void; muted: boolean; onMute: (value: boolean) => void;
   voiceLevel: VoiceLevel; onVoiceLevel: (value: VoiceLevel) => void;
   wakeStatus: WakeStatus; voiceInfo: { available: boolean; fellBack: boolean }; gpsLost?: boolean;
-  rerouteUrl: string; onExit: () => void; onShare: () => void; onDetour?: () => void; tollInfo?: ReactNode;
+  rerouteUrl: string; rerouteStatus?: RerouteStatus; onExit: () => void; onShare: () => void; onDetour?: () => void; tollInfo?: ReactNode;
+  /** The active side quest tracker, or the "quest complete" reward. */
   questStatus?: ReactNode; xpBadge?: ReactNode;
 }) {
   const { state, alerts, remainingKm, km, offRouteM } = snapshot;
@@ -66,6 +72,10 @@ export function CruiseHud({
   const cards = snapshot.cardsSuppressed ? [] : sorted.filter((a) => a.level === 2 && now - (shown.current.cards[a.event.id] ?? 0) < cruiseConfig.cardDismissMs && a !== banner);
   const chips = snapshot.cardsSuppressed ? [] : sorted.filter((a) => a.level === 1).slice(0, 3);
   const recovered = recoveredAt !== null && now - recoveredAt < RECOVERED_MS;
+  const turn = snapshot.turn;
+  const turnUrgent = turn !== null && turn.distKm <= cueDistances(snapshot.speedKmh / 3.6).near;
+  // Close turns outrank everything; otherwise a rest-stop banner comes first and the turn shows when it is a few km away.
+  const showTurn = turn !== null && !arrivedNow(snapshot) && (turnUrgent || (!banner && turn.distKm <= TURN_SHOW_KM));
 
   const progress = driveProgress(km, offRouteM, remainingKm === null || km === null ? 0 : km + remainingKm, stops);
   const next = progress.state === "moving" ? progress.next : undefined;
@@ -75,7 +85,8 @@ export function CruiseHud({
   const facilities = (a: Alert) => a.event.facilities.filter((key) => FACILITY_LABEL[key]).map((key) => t(lang, FACILITY_LABEL[key]));
 
   const announcement = state === "ARMED" ? t(lang, "cruiseArming")
-    : state === "OFF_ROUTE" ? t(lang, "cruiseOff")
+    : state === "OFF_ROUTE" ? t(lang, rerouteStatus === "finding" ? "rerouting" : "cruiseOff")
+    : showTurn && turn ? `${distance(turn.distKm)} ${instruction(lang, turn.maneuver, destination)}`
     : banner ? `${name(banner)} ${distance(banner.distKm)}` : arrived ? t(lang, "cruiseArrived") : "";
 
   const cycleVoice = () => onVoiceLevel(VOICE_ORDER[(VOICE_ORDER.indexOf(voiceLevel) + 1) % VOICE_ORDER.length]);
@@ -83,16 +94,26 @@ export function CruiseHud({
 
   return <section className="drive-hud cruise-hud" data-testid="screen-drive" data-state={state} aria-labelledby="drive-heading">
     <div className="cruise-top">
-      <div className="drive-instruction cruise-banner" data-testid="cruise-banner" data-level={banner ? 3 : state === "OFF_ROUTE" ? "off" : state === "ARRIVING" ? "arriving" : 1}>
+      <div className="drive-instruction cruise-banner" data-testid="cruise-banner" data-level={showTurn ? "turn" : banner ? 3 : state === "OFF_ROUTE" ? "off" : state === "ARRIVING" ? "arriving" : 1}>
         <h2 id="drive-heading" className="drive-mode" ref={heading} tabIndex={-1}>
           {t(lang, simulated ? "simulation" : "driveView")}<span className="sr-only" data-testid="cruise-state">{state}</span>
         </h2>
-        {state === "ARMED" ? <p className="drive-message" role="status" data-testid="drive-status">{t(lang, "cruiseArming")}</p>
+        {state === "ARMED" ? <p className="drive-message" role="status" data-testid="drive-status">{t(lang, rerouteStatus === "found" ? "rerouted" : "cruiseArming")}</p>
           : state === "OFF_ROUTE" ? <div className="cruise-off">
-            <p className="drive-message" role="status" data-testid="drive-status">{t(lang, "cruiseOff")}</p>
-            <a className="btn cruise-reroute" data-testid="cruise-reroute" href={rerouteUrl} target="_blank" rel="noopener noreferrer">{t(lang, "cruiseReroute")}</a>
+            <p className="drive-message" role="status" data-testid="drive-status">{t(lang, rerouteStatus === "finding" ? "rerouting" : rerouteStatus === "failed" ? "rerouteFailed" : "cruiseOff")}</p>
+            {rerouteStatus === "failed" && <a className="btn cruise-reroute" data-testid="cruise-reroute" href={rerouteUrl} target="_blank" rel="noopener noreferrer">{t(lang, "cruiseReroute")}</a>}
           </div>
           : arrived ? <p className="drive-message" role="status" data-testid="drive-status">{t(lang, "cruiseArrived")}</p>
+          : showTurn && turn ? <div className="drive-next cruise-turn" data-testid="cruise-turn" data-icon={turnIcon(turn.maneuver)}>
+            <strong data-testid="turn-distance"><TurnArrow icon={turnIcon(turn.maneuver)} />{distance(turn.distKm)}</strong>
+            <div>
+              <p className="drive-context">{t(lang, "turnNext")}</p>
+              <p className="drive-place" data-testid="turn-instruction">{instruction(lang, turn.maneuver, destination)}</p>
+              {turn.then && <p className="cruise-facilities cruise-then">
+                <TurnArrow icon={turnIcon(turn.then)} small />{instruction(lang, turn.then, destination)}
+              </p>}
+            </div>
+          </div>
           : banner ? <div className="drive-next">
             <strong data-testid="drive-next-distance">{distance(banner.distKm)}</strong>
             <div>
@@ -159,9 +180,11 @@ export function CruiseHud({
       <div className="cruise-actions">
         {simulated && onDetour && state === "CRUISING" && <button type="button" className="btn" data-testid="cruise-detour" onClick={onDetour}>{t(lang, "cruiseDetour")}</button>}
         <button type="button" className="btn drive-end" data-testid={simulated ? "btn-stop-replay" : "btn-stop-drive"}
-          data-armed={exitArmed} onClick={confirmExit}>{exitArmed ? t(lang, "cruiseExitConfirm") : simulated ? "Stop simulation" : t(lang, "cruiseExit")}</button>
+          data-armed={exitArmed} onClick={confirmExit}>{exitArmed ? t(lang, "cruiseExitConfirm") : t(lang, simulated ? "endSimulation" : "cruiseExit")}</button>
       </div>
     </div>
     <p className="sr-only" aria-live="polite">{announcement}</p>
   </section>;
 }
+
+function arrivedNow(snapshot: CruiseSnapshot) { return snapshot.arrived || snapshot.state === "OFF_ROUTE" || snapshot.state === "ARMED"; }

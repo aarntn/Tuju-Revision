@@ -8,11 +8,11 @@ import "./map-first.css";
 import "./presentation.css";
 import "./cruise.css";
 import "./road-ui.css";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Jalan Pulang",
+  title: "LaPan",
   description: "Plan your balik kampung drive from Kuala Lumpur to Ipoh.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true },
@@ -21,9 +21,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#F2F3F7", viewportFit: "cover" };
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+// Number plates and codes only.
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={geist.variable}><body>
+  return <html lang="en" className={`${geist.variable} ${geistMono.variable}`}><body>
     <AppShell />
     <div className="presentation-stage">
       <div className="presentation-phone" data-testid="presentation-phone">

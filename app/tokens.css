@@ -61,7 +61,7 @@
   /* type */
   --font-body: var(--font-geist), system-ui, sans-serif;
   --font-display: var(--font-body);
-  --font-mono: var(--font-body);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --text-xs: 12px;
   --text-sm: 15px;
   --text-md: 18px;
@@ -100,4 +100,16 @@
   --trip-title-size: clamp(23px, 6cqw, 34px);
   --metric-size: clamp(14px, 4cqw, 19px);
   --focus-ring: 2px solid var(--color-accent);
+}
+
+/* LaPan: daytime base-map colours, applied to the vector street style by lib/map-theme.ts (the night theme has its own). */
+:root {
+  --map-day-land: #eef0f3;
+  --map-day-green: #d5ecd0;
+  --map-day-water: #b9dafb;
+  --map-day-building: #e2e4e9;
+  --map-day-road: #ffffff;
+  --map-day-road-major: #fde9a8;
+  --map-day-road-casing: #d6d9e0;
+  --map-day-rail: #cfd2d8;
 }

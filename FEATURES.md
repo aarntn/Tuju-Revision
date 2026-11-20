@@ -20,7 +20,7 @@ Based on the numbered features and engagement requirements in `CLAUDE_CODE_PROMP
 ## Engagement and app support
 
 - English and Bahasa Malaysia trip flows and Group Arrival screens.
-- Map-first landing page and a two-step skippable onboarding (vehicle, needs) that pre-fills the planner at `/plan`.
+- Map-first: the app opens on the planner at `/plan` (the old onboarding was removed; `/onboarding` redirects there).
 - Tester mode at `/?t=1` with three tasks and optional anonymous feedback.
 - Printable tester QR, share page, protected stats, a data and privacy page, and preview states for the UI.
 - The tester counters use temporary server memory unless the separate Redis integration is configured.
